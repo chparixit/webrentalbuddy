@@ -83,6 +83,8 @@ export const login = async (req: Request, res: Response) => {
         name: user.name,
         email: user.email,
         profileImage: user.profileImage || "",
+        preferredBHK: user.preferredBHK || "",
+        preferredLocation: user.preferredLocation || "",
       },
     });
   } catch (error: any) {
