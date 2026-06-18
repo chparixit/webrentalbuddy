@@ -21,6 +21,16 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: "",
   },
+
+  preferredBHK: {
+    type: String,
+    default: "",
+  },
+
+  preferredLocation: {
+    type: String,
+    default: "",
+  },
 });
 
 export default mongoose.model("User", userSchema);
