@@ -1,0 +1,130 @@
+// === Admin User Management Service ===
+// Handles business logic for admin CRUD operations on users
+import User from "../models/User";
+import bcrypt from "bcrypt";
+
+interface PaginationMeta {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
+interface GetUsersOptions {
+  page: number;
+  limit: number;
+  search?: string;
+}
+
+export const getUsers = async (options: GetUsersOptions) => {
+  const { page, limit, search } = options;
+  const skip = (page - 1) * limit;
+
+  // Build search filter: match against BOTH name and email
+  let filter: any = {};
+  if (search && search.trim()) {
+    const regex = new RegExp(search.trim(), "i");
+    filter = {
+      $or: [{ name: regex }, { email: regex }],
+    };
+  }
+
+  const [users, total] = await Promise.all([
+    User.find(filter)
+      .select("-password") // never expose passwords
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 }),
+    User.countDocuments(filter),
+  ]);
+
+  const meta: PaginationMeta = {
+    page,
+    limit,
+    total,
+    totalPages: Math.ceil(total / limit),
+  };
+
+  return { data: users, meta };
+};
+
+export const getUserById = async (id: string) => {
+  const user = await User.findById(id).select("-password");
+  if (!user) {
+    throw new Error("User not found");
+  }
+  return user;
+};
+
+export const createUser = async (userData: {
+  name: string;
+  email: string;
+  password: string;
+  role?: string;
+  status?: string;
+}) => {
+  // Check if email already exists
+  const existing = await User.findOne({ email: userData.email });
+  if (existing) {
+    throw new Error("Email already exists");
+  }
+
+  // Hash password before saving
+  const hashedPassword = await bcrypt.hash(userData.password, 10);
+
+  const user = await User.create({
+    name: userData.name,
+    email: userData.email,
+    password: hashedPassword,
+    role: userData.role || "user",
+    status: userData.status || "active",
+  });
+
+  // Return user without password
+  const { password, ...userWithoutPassword } = user.toObject();
+  return userWithoutPassword;
+};
+
+export const updateUser = async (
+  id: string,
+  updateData: {
+    name?: string;
+    email?: string;
+    password?: string;
+    role?: string;
+    status?: string;
+  }
+) => {
+  const user = await User.findById(id);
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  // If updating email, check it's not taken by another user
+  if (updateData.email && updateData.email !== user.email) {
+    const existing = await User.findOne({ email: updateData.email });
+    if (existing) {
+      throw new Error("Email already in use");
+    }
+  }
+
+  // If updating password, hash it
+  if (updateData.password) {
+    updateData.password = await bcrypt.hash(updateData.password, 10);
+  }
+
+  const updatedUser = await User.findByIdAndUpdate(id, updateData, {
+    new: true,
+    runValidators: true,
+  }).select("-password");
+
+  return updatedUser;
+};
+
+export const deleteUser = async (id: string) => {
+  const user = await User.findByIdAndDelete(id);
+  if (!user) {
+    throw new Error("User not found");
+  }
+  return { message: "User deleted successfully" };
+};
