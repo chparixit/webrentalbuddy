@@ -80,8 +80,9 @@ export const createUser = async (userData: {
     status: userData.status || "active",
   });
 
-  // Return user without password
-  const { password, ...userWithoutPassword } = user.toObject();
+  // Return user without password using toJSON()
+  const userJson = user.toJSON();
+  const { password, ...userWithoutPassword } = userJson;
   return userWithoutPassword;
 };
 
@@ -108,12 +109,17 @@ export const updateUser = async (
     }
   }
 
-  // If updating password, hash it
+  // Build update object with type-safe approach for enum fields
+  const updateFields: Record<string, any> = {};
+  if (updateData.name !== undefined) updateFields.name = updateData.name;
+  if (updateData.email !== undefined) updateFields.email = updateData.email;
+  if (updateData.role !== undefined) updateFields.role = updateData.role;
+  if (updateData.status !== undefined) updateFields.status = updateData.status;
   if (updateData.password) {
-    updateData.password = await bcrypt.hash(updateData.password, 10);
+    updateFields.password = await bcrypt.hash(updateData.password, 10);
   }
 
-  const updatedUser = await User.findByIdAndUpdate(id, updateData, {
+  const updatedUser = await User.findByIdAndUpdate(id, updateFields, {
     new: true,
     runValidators: true,
   }).select("-password");

@@ -174,6 +174,7 @@ export const login = async (req: Request, res: Response) => {
         profileImage: user.profileImage || "",
         preferredBHK: user.preferredBHK || "",
         preferredLocation: user.preferredLocation || "",
+        role: user.role || "user",
       },
     });
   } catch (error: any) {

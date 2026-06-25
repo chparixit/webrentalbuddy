@@ -9,6 +9,7 @@ import path from "path";
 import connectDB from "./config/db";
 import authRoutes from "./routes/authRoutes";
 import uploadRoutes from "./routes/uploadRoutes";
+import adminUserRoutes from "./routes/adminUserRoutes";
 
 const app = express();
 
@@ -23,6 +24,7 @@ app.use(
 
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1", uploadRoutes);
+app.use("/api/v1/admin/users", adminUserRoutes);
 
 // Global error handler for Express 5
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
