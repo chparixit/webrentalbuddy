@@ -182,8 +182,7 @@ export const login = async (req: Request, res: Response) => {
     console.log("LOGIN BODY:", req.body);
 
     return res.status(500).json({
-      message: "Server Error",
-      error: error.message,
+      message: "Internal server error",
     });
   }
 };

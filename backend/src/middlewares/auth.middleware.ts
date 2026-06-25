@@ -31,7 +31,7 @@ export const authMiddleware = async (
       });
     }
 
-    (req as any).user = user;
+    req.user = user as any;
 
     next();
   } catch {

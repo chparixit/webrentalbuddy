@@ -3,6 +3,9 @@
 import User from "../models/User";
 import bcrypt from "bcrypt";
 
+type UserRole = "admin" | "user";
+type UserStatus = "active" | "inactive";
+
 interface PaginationMeta {
   page: number;
   limit: number;
@@ -60,8 +63,8 @@ export const createUser = async (userData: {
   name: string;
   email: string;
   password: string;
-  role?: string;
-  status?: string;
+  role?: UserRole;
+  status?: UserStatus;
 }) => {
   // Check if email already exists
   const existing = await User.findOne({ email: userData.email });
@@ -76,8 +79,8 @@ export const createUser = async (userData: {
     name: userData.name,
     email: userData.email,
     password: hashedPassword,
-    role: userData.role || "user",
-    status: userData.status || "active",
+    role: userData.role ?? "user",
+    status: userData.status ?? "active",
   });
 
   // Return user without password using toJSON()
@@ -92,13 +95,18 @@ export const updateUser = async (
     name?: string;
     email?: string;
     password?: string;
-    role?: string;
-    status?: string;
+    role?: UserRole;
+    status?: UserStatus;
   }
 ) => {
   const user = await User.findById(id);
   if (!user) {
     throw new Error("User not found");
+  }
+
+  // Validate password length if provided
+  if (updateData.password && updateData.password.length < 6) {
+    throw new Error("Password must be at least 6 characters");
   }
 
   // If updating email, check it's not taken by another user
@@ -128,9 +136,19 @@ export const updateUser = async (
 };
 
 export const deleteUser = async (id: string) => {
-  const user = await User.findByIdAndDelete(id);
+  const user = await User.findById(id);
   if (!user) {
     throw new Error("User not found");
   }
+
+  // Prevent deleting the last admin
+  if (user.role === "admin") {
+    const adminCount = await User.countDocuments({ role: "admin" });
+    if (adminCount <= 1) {
+      throw new Error("Cannot delete the last admin account");
+    }
+  }
+
+  await User.findByIdAndDelete(id);
   return { message: "User deleted successfully" };
 };

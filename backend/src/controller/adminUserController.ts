@@ -1,7 +1,13 @@
 // === Admin User Management Controller ===
 // 5 endpoints: GET all (paginated/search), GET by id, POST create, PUT update, DELETE
 import { Request, Response } from "express";
+import mongoose from "mongoose";
 import * as adminUserService from "../services/adminUser.service";
+
+const getRouteUserId = (req: Request) => {
+  const id = req.params.id;
+  return Array.isArray(id) ? id[0] : id;
+};
 
 export const getAllUsers = async (req: Request, res: Response) => {
   try {
@@ -19,7 +25,11 @@ export const getAllUsers = async (req: Request, res: Response) => {
 
 export const getUserById = async (req: Request, res: Response) => {
   try {
-    const user = await adminUserService.getUserById(req.params.id);
+    const userId = getRouteUserId(req);
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ message: "Invalid user ID" });
+    }
+    const user = await adminUserService.getUserById(userId);
     return res.status(200).json({ data: user });
   } catch (error: any) {
     if (error.message === "User not found") {
@@ -52,9 +62,19 @@ export const createUser = async (req: Request, res: Response) => {
 
 export const updateUser = async (req: Request, res: Response) => {
   try {
+    const userId = getRouteUserId(req);
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ message: "Invalid user ID" });
+    }
+    // Prevent admin from changing their own role away from admin
+    const requestingUser = req.user!;
+    if (userId === requestingUser._id.toString() && req.body.role && req.body.role !== "admin") {
+      return res.status(400).json({ message: "Cannot change your own admin role" });
+    }
+
     const { name, email, password, role, status } = req.body;
 
-    const updatedUser = await adminUserService.updateUser(req.params.id, {
+    const updatedUser = await adminUserService.updateUser(userId, {
       name,
       email,
       password,
@@ -77,7 +97,17 @@ export const updateUser = async (req: Request, res: Response) => {
 
 export const deleteUser = async (req: Request, res: Response) => {
   try {
-    const result = await adminUserService.deleteUser(req.params.id);
+    const userId = getRouteUserId(req);
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ message: "Invalid user ID" });
+    }
+    // Prevent admin from deleting their own account
+    const requestingUser = req.user!;
+    if (userId === requestingUser._id.toString()) {
+      return res.status(400).json({ message: "Cannot delete your own account" });
+    }
+
+    const result = await adminUserService.deleteUser(userId);
     return res.status(200).json(result);
   } catch (error: any) {
     if (error.message === "User not found") {
