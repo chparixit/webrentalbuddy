@@ -2,9 +2,14 @@ import { Request, Response } from "express";
 import User from "../models/User";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import { isDatabaseReady } from "../config/db";
 
 export const register = async (req: Request, res: Response) => {
   try {
+    if (!isDatabaseReady()) {
+      return res.status(503).json({ message: "Database unavailable. Please try again later." });
+    }
+
     const { name, email, password, preferredBHK, preferredLocation } = req.body;
 
     if (!name || !email || !password) {
@@ -43,6 +48,10 @@ export const register = async (req: Request, res: Response) => {
 };
 export const whoami = async (req: Request, res: Response) => {
   try {
+    if (!isDatabaseReady()) {
+      return res.status(503).json({ message: "Database unavailable. Please try again later." });
+    }
+
     const user = (req as any).user;
     return res.status(200).json({
       user: {
@@ -61,6 +70,10 @@ export const whoami = async (req: Request, res: Response) => {
 
 export const updateProfile = async (req: Request, res: Response) => {
   try {
+    if (!isDatabaseReady()) {
+      return res.status(503).json({ message: "Database unavailable. Please try again later." });
+    }
+
     const user = (req as any).user;
     const { name, preferredBHK, preferredLocation } = req.body;
     const profileImage = req.file ? `/uploads/${req.file.filename}` : undefined;
@@ -98,6 +111,10 @@ export const updateProfile = async (req: Request, res: Response) => {
 
 export const updatePassword = async (req: Request, res: Response) => {
   try {
+    if (!isDatabaseReady()) {
+      return res.status(503).json({ message: "Database unavailable. Please try again later." });
+    }
+
     const user = (req as any).user;
     const { currentPassword, newPassword } = req.body;
 
@@ -132,6 +149,10 @@ export const updatePassword = async (req: Request, res: Response) => {
 
 export const login = async (req: Request, res: Response) => {
   try {
+    if (!isDatabaseReady()) {
+      return res.status(503).json({ message: "Database unavailable. Please try again later." });
+    }
+
     console.log("POST /api/auth/login", req.body?.email);
 
     const { email, password } = req.body;

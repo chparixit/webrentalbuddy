@@ -2,7 +2,7 @@ import "express";
 
 // Minimal user interface for Express Request augmentation
 // Does not extend Document to avoid _id type conflicts with Mongoose
-interface IUser {
+export interface IUser {
   _id: any;
   name: string;
   email: string;

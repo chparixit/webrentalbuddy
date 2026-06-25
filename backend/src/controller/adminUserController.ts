@@ -4,6 +4,8 @@ import { Request, Response } from "express";
 import mongoose from "mongoose";
 import * as adminUserService from "../services/adminUser.service";
 
+type AuthenticatedRequest = Request & { user?: any };
+
 const getRouteUserId = (req: Request) => {
   const id = req.params.id;
   return Array.isArray(id) ? id[0] : id;
@@ -67,7 +69,7 @@ export const updateUser = async (req: Request, res: Response) => {
       return res.status(400).json({ message: "Invalid user ID" });
     }
     // Prevent admin from changing their own role away from admin
-    const requestingUser = req.user!;
+    const requestingUser = (req as AuthenticatedRequest).user!;
     if (userId === requestingUser._id.toString() && req.body.role && req.body.role !== "admin") {
       return res.status(400).json({ message: "Cannot change your own admin role" });
     }
@@ -102,7 +104,7 @@ export const deleteUser = async (req: Request, res: Response) => {
       return res.status(400).json({ message: "Invalid user ID" });
     }
     // Prevent admin from deleting their own account
-    const requestingUser = req.user!;
+    const requestingUser = (req as AuthenticatedRequest).user!;
     if (userId === requestingUser._id.toString()) {
       return res.status(400).json({ message: "Cannot delete your own account" });
     }
