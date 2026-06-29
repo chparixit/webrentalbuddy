@@ -27,6 +27,7 @@ router.post("/", createUser);
 
 // PUT /api/v1/admin/users/:id - Update user
 router.put("/:id", updateUser);
+router.patch("/:id", updateUser);
 
 // DELETE /api/v1/admin/users/:id - Delete user
 router.delete("/:id", deleteUser);

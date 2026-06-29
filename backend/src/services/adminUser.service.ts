@@ -45,7 +45,7 @@ export const getUsers = async (options: GetUsersOptions) => {
     page,
     limit,
     total,
-    totalPages: Math.ceil(total / limit),
+    totalPages: Math.max(1, Math.ceil(total / limit)),
   };
 
   return { data: users, meta };

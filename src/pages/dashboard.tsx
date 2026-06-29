@@ -39,7 +39,8 @@ const StarIcon = () => (
 
 const SearchIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-    <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+    <circle cx="11" cy="11" r="8" />
+    <line x1="21" y1="21" x2="16.65" y2="16.65" />
   </svg>
 );
 
@@ -55,20 +56,26 @@ const rooms = [
 ];
 
 const stats = [
-  { label: "Rooms Available", value: "128", color: "#2563EB", bg: "#EFF6FF" },
-  { label: "Active Booking", value: "1", color: "#059669", bg: "#ECFDF5" },
-  { label: "Saved Rooms", value: "6", color: "#7C3AED", bg: "#F5F3FF" },
-  { label: "Total Spent", value: "रू 30,500", color: "#D97706", bg: "#FFFBEB" },
+  { label: "Rooms Available", value: "128", color: "#2563EB" },
+  { label: "Active Booking", value: "1", color: "#059669" },
+  { label: "Saved Rooms", value: "6", color: "#7C3AED" },
+  { label: "Total Spent", value: "रू 30,500", color: "#D97706" },
 ];
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 
-export const Dashboard = () => {
+export default function Dashboard({
+  user,
+  onGoProfileUpdate,
+  onGoPasswordUpdate
+}: any) {
   const [search, setSearch] = useState("");
   const [liked, setLiked] = useState<number[]>([2, 6]);
 
   const toggleLike = (id: number) =>
-    setLiked(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+    setLiked(prev =>
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
 
   const filtered = rooms.filter(r =>
     r.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -76,97 +83,114 @@ export const Dashboard = () => {
   );
 
   return (
-    <div style={{ background: "#F9FAFB", minHeight: "calc(100vh - 60px)", padding: "36px 80px 60px", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}>
+    <div style={{
+      background: "#F9FAFB",
+      minHeight: "calc(100vh - 60px)",
+      padding: "36px 80px 60px",
+      fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif"
+    }}>
 
       {/* Welcome */}
       <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontSize: 24, fontWeight: 700, color: "#111827", margin: "0 0 4px" }}>
-          Welcome back, Ram 👋
+        <h1 style={{ fontSize: 24, fontWeight: 700, color: "#111827" }}>
+          Welcome back, {user?.name || "User"} 👋
         </h1>
-        <p style={{ fontSize: 14, color: "#9CA3AF", margin: 0 }}>Find your perfect room across Kathmandu</p>
+        <p style={{ fontSize: 14, color: "#9CA3AF" }}>
+          Find your perfect room across Kathmandu
+        </p>
+
+        <div style={{ marginTop: 10, display: "flex", gap: 10 }}>
+          <button onClick={onGoProfileUpdate}
+            style={{ padding: "8px 12px", background: "#2563EB", color: "white", border: "none", borderRadius: 8 }}
+          >
+            Edit Profile
+          </button>
+
+          <button onClick={onGoPasswordUpdate}
+            style={{ padding: "8px 12px", background: "#7C3AED", color: "white", border: "none", borderRadius: 8 }}
+          >
+            Change Password
+          </button>
+        </div>
       </div>
 
       {/* Stats */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 32 }}>
         {stats.map(s => (
-          <div key={s.label} style={{ background: "white", borderRadius: 14, padding: "18px 20px", border: "1px solid #F3F4F6" }}>
-            <div style={{ fontSize: 22, fontWeight: 700, color: s.color, marginBottom: 4 }}>{s.value}</div>
-            <div style={{ fontSize: 12, color: "#9CA3AF", fontWeight: 500 }}>{s.label}</div>
+          <div key={s.label} style={{
+            background: "white",
+            borderRadius: 14,
+            padding: "18px 20px",
+            border: "1px solid #F3F4F6"
+          }}>
+            <div style={{ fontSize: 22, fontWeight: 700, color: s.color }}>
+              {s.value}
+            </div>
+            <div style={{ fontSize: 12, color: "#9CA3AF" }}>{s.label}</div>
           </div>
         ))}
       </div>
 
-      {/* Search + heading */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
-        <h2 style={{ fontSize: 17, fontWeight: 700, color: "#111827", margin: 0 }}>Browse Rooms</h2>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, background: "white", border: "1.5px solid #E5E7EB", borderRadius: 10, padding: "0 14px", width: 280 }}>
-          <span style={{ color: "#9CA3AF" }}><SearchIcon /></span>
+      {/* Search */}
+      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 20 }}>
+        <h2 style={{ fontSize: 17, fontWeight: 700 }}>Browse Rooms</h2>
+
+        <div style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          background: "white",
+          border: "1px solid #E5E7EB",
+          borderRadius: 10,
+          padding: "0 12px",
+          width: 280
+        }}>
+          <SearchIcon />
           <input
             value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Search by name or area..."
-            style={{ flex: 1, border: "none", outline: "none", padding: "10px 0", fontSize: 13, color: "#111827", background: "transparent", fontFamily: "inherit" }}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search..."
+            style={{ border: "none", outline: "none", flex: 1 }}
           />
         </div>
       </div>
 
-      {/* Room Grid */}
+      {/* Rooms */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20 }}>
         {filtered.map(room => (
-          <div key={room.id}
-            style={{ background: "white", borderRadius: 16, overflow: "hidden", border: "1px solid #F3F4F6", boxShadow: "0 1px 4px rgba(0,0,0,0.05)", transition: "box-shadow 0.2s" }}
-            onMouseOver={e => (e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.09)")}
-            onMouseOut={e => (e.currentTarget.style.boxShadow = "0 1px 4px rgba(0,0,0,0.05)")}
-          >
-            {/* Image */}
-            <div style={{ position: "relative", height: 175, overflow: "hidden" }}>
-              <img src={room.image} alt={room.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-              <span style={{ position: "absolute", top: 10, left: 10, background: room.tagColor, color: "white", fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 20 }}>
-                {room.tag}
-              </span>
-              <button onClick={() => toggleLike(room.id)}
-                style={{ position: "absolute", top: 8, right: 8, width: 30, height: 30, background: "white", borderRadius: "50%", border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: "0 1px 4px rgba(0,0,0,0.15)" }}>
-                <HeartIcon filled={liked.includes(room.id)} />
-              </button>
-            </div>
+          <div key={room.id} style={{
+            background: "white",
+            borderRadius: 16,
+            overflow: "hidden",
+            border: "1px solid #F3F4F6"
+          }}>
 
-            {/* Info */}
-            <div style={{ padding: "14px 16px" }}>
-              <div style={{ fontSize: 14, fontWeight: 600, color: "#111827", marginBottom: 4, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{room.title}</div>
-              <div style={{ display: "flex", alignItems: "center", gap: 4, color: "#9CA3AF", fontSize: 12, marginBottom: 10 }}>
-                <MapPinIcon />{room.location}
-              </div>
+            <img src={room.image} style={{ width: "100%", height: 170, objectFit: "cover" }} />
 
-              {/* Tags */}
-              <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
-                <span style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "#6B7280", background: "#F9FAFB", padding: "3px 8px", borderRadius: 6 }}>
-                  <BedIcon />{room.beds} Bed
-                </span>
-                {room.wifi && (
-                  <span style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "#6B7280", background: "#F9FAFB", padding: "3px 8px", borderRadius: 6 }}>
-                    <WifiIcon />WiFi
-                  </span>
-                )}
-              </div>
+            <div style={{ padding: 14 }}>
+              <h3 style={{ fontSize: 14 }}>{room.title}</h3>
+              <p style={{ fontSize: 12, color: "#9CA3AF" }}>
+                <MapPinIcon /> {room.location}
+              </p>
 
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <div>
-                  <span style={{ fontSize: 16, fontWeight: 700, color: "#111827" }}>रू {room.price.toLocaleString()}</span>
-                  <span style={{ fontSize: 11, color: "#9CA3AF" }}>/mo</span>
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 3 }}>
-                  <StarIcon />
-                  <span style={{ fontSize: 12, fontWeight: 600, color: "#111827" }}>{room.rating}</span>
-                  <span style={{ fontSize: 11, color: "#9CA3AF" }}>({room.reviews})</span>
-                </div>
+              <div style={{ display: "flex", justifyContent: "space-between", marginTop: 10 }}>
+                <span style={{ fontWeight: 700 }}>रू {room.price}</span>
+                <span><StarIcon /> {room.rating}</span>
               </div>
 
               <button
-                style={{ marginTop: 12, width: "100%", padding: "9px", background: "#2563EB", color: "white", border: "none", borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}
-                onMouseOver={e => (e.currentTarget.style.background = "#1D4ED8")}
-                onMouseOut={e => (e.currentTarget.style.background = "#2563EB")}
+                onClick={() => toggleLike(room.id)}
+                style={{
+                  marginTop: 10,
+                  width: "100%",
+                  padding: 8,
+                  background: liked.includes(room.id) ? "#EF4444" : "#2563EB",
+                  color: "white",
+                  border: "none",
+                  borderRadius: 8
+                }}
               >
-                View Details
+                {liked.includes(room.id) ? "Liked" : "Like"}
               </button>
             </div>
           </div>
@@ -174,6 +198,4 @@ export const Dashboard = () => {
       </div>
     </div>
   );
-};
-
-export default Dashboard;
+}
