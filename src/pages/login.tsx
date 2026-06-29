@@ -205,7 +205,7 @@ export const LoginPage = ({ onGoRegister, onLoginSuccess }: LoginPageProps) => {
       const res = await loginApi({ email, password });
 
       localStorage.setItem("token", res.data.token);
-      onLoginSuccess();
+      onLoginSuccess(res.data.user);
     } catch (error: any) {
       if (error.response) {
         alert(error.response.data?.message ?? "Login failed");
