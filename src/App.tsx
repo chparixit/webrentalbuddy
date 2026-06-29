@@ -567,9 +567,17 @@ export default function App() {
         onLogout={handleLogout}
       />
 
-      {page === "login" && !user && (
-        <LoginPage onGoRegister={() => setPage("register")} onSuccess={handleLoginSuccess} />
-      )}
+     {page === "login" && (
+  <LoginPage
+    onGoRegister={() => setPage("register")}
+    onLoginSuccess={(userData: any) => {
+      console.log("LOGIN RESPONSE:", userData);
+
+      setUser(userData.user); // 👈 FIXED (important)
+      setPage("dashboard");
+    }}
+  />
+)}
 
       {page === "register" && !user && <RegisterPage onGoLogin={() => setPage("login")} />}
 

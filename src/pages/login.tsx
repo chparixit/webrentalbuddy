@@ -114,10 +114,10 @@ const ImagePanel = () => (
 
 interface LoginPageProps {
   onGoRegister: () => void;
-  onSuccess: () => void;
+  onLoginSuccess: (user: any) => void;
 }
 
-export const LoginPage = ({ onGoRegister, onSuccess }: LoginPageProps) => {
+export const LoginPage = ({ onGoRegister, onLoginSuccess }: LoginPageProps) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
@@ -205,7 +205,7 @@ export const LoginPage = ({ onGoRegister, onSuccess }: LoginPageProps) => {
       const res = await loginApi({ email, password });
 
       localStorage.setItem("token", res.data.token);
-      onSuccess();
+      onLoginSuccess();
     } catch (error: any) {
       if (error.response) {
         alert(error.response.data?.message ?? "Login failed");
