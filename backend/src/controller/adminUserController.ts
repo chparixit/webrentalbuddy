@@ -114,11 +114,16 @@ export const deleteUser = async (req: Request, res: Response) => {
       return res.status(400).json({ message: "Invalid user ID" });
     }
     // Prevent admin from deleting their own account
-   const requestingUser = (req as AuthenticatedRequest).user;
+    const requestingUser = (req as AuthenticatedRequest).user;
 
-if (!requestingUser) {
-  return res.status(401).json({ message: "Unauthorized" });
-}
+    if (!requestingUser) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    if (userId === requestingUser._id.toString()) {
+      return res.status(400).json({ message: "Cannot delete your own account" });
+    }
+
     const result = await adminUserService.deleteUser(userId);
     return res.status(200).json(result);
   } catch (error: any) {
