@@ -56,3 +56,11 @@ export const removeFromWishlist = async (userId: string, paramId: string) => {
 
   return { message: "Removed from wishlist" };
 };
+
+/**
+ * Check if a property is in the user's wishlist
+ */
+export const checkWishlistStatus = async (userId: string, propertyId: string): Promise<boolean> => {
+  const existing = await Wishlist.findOne({ user: userId, property: propertyId });
+  return !!existing;
+};

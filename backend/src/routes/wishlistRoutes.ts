@@ -6,6 +6,7 @@ import {
   getWishlist,
   addToWishlist,
   removeFromWishlist,
+  checkWishlistStatus,
 } from "../controller/wishlistController";
 
 const router = express.Router();
@@ -15,6 +16,7 @@ router.use(authMiddleware);
 
 router.get("/", getWishlist);
 router.post("/", addToWishlist);
+router.get("/check/:propertyId", checkWishlistStatus);
 router.delete("/:propertyId", removeFromWishlist);
 
 export default router;
