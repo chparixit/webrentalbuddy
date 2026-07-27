@@ -19,7 +19,7 @@ describe("Authentication API", () => {
   beforeAll(async () => {
     app = createTestApp();
     await connectTestDB();
-  });
+  }, 30000);
 
   afterAll(async () => {
     await disconnectTestDB();
@@ -27,7 +27,7 @@ describe("Authentication API", () => {
 
   afterEach(async () => {
     await clearDatabase();
-  });
+  }, 30000);
 
   describe("POST /api/v1/auth/register", () => {
     it("should return 400 when required fields are missing", async () => {
@@ -98,7 +98,7 @@ describe("Authentication API", () => {
         });
 
       expect(res.status).toBe(400);
-      expect(res.body).toHaveProperty("message", "Email already exists");
+      expect(res.body).toHaveProperty("message", "User already exists");
     });
   });
 

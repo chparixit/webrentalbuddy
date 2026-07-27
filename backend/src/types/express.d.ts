@@ -1,26 +1,27 @@
-import "express";
+// === Express Request Type Augmentation ===
+// Extends Express Request to include the authenticated user object
 
-// Minimal user interface for Express Request augmentation
-// Does not extend Document to avoid _id type conflicts with Mongoose
-export interface IUser {
-  _id: any;
+import { Document } from "mongoose";
+import { Request } from "express";
+
+// Reflects the User model structure returned from MongoDB (with ObjectId)
+export interface IAuthUser {
+  _id: unknown; // ObjectId from MongoDB - typed loosely to avoid conflicts
+  id: string;
   name: string;
   email: string;
-  role: "admin" | "user";
-  status: "active" | "inactive";
-  profileImage?: string;
+  profileImage: string;
   preferredBHK?: string;
   preferredLocation?: string;
-  createdAt: string;
-  updatedAt: string;
+  role: "admin" | "user";
+  status: "active" | "inactive";
 }
 
+// Augment Express Request to include the authenticated user
 declare global {
   namespace Express {
     interface Request {
-      user?: IUser;
+      user?: IAuthUser;
     }
   }
 }
-
-export {};

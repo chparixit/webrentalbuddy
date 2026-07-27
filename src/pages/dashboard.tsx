@@ -1,4 +1,5 @@
 import { useState } from "react";
+import type { AuthUser } from "../api/authApi";
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
 
@@ -12,22 +13,6 @@ const MapPinIcon = () => (
 const HeartIcon = ({ filled = false }: { filled?: boolean }) => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill={filled ? "#EF4444" : "none"} stroke={filled ? "#EF4444" : "currentColor"} strokeWidth="1.8">
     <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-  </svg>
-);
-
-const BedIcon = () => (
-  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-    <path d="M2 4v16" /><path d="M2 8h18a2 2 0 0 1 2 2v10" />
-    <path d="M2 17h20" /><path d="M6 8v9" />
-  </svg>
-);
-
-const WifiIcon = () => (
-  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-    <path d="M5 12.55a11 11 0 0 1 14.08 0" />
-    <path d="M1.42 9a16 16 0 0 1 21.16 0" />
-    <path d="M8.53 16.11a6 6 0 0 1 6.95 0" />
-    <line x1="12" y1="20" x2="12.01" y2="20" />
   </svg>
 );
 
@@ -46,7 +31,21 @@ const SearchIcon = () => (
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
-const rooms = [
+interface Room {
+  id: number;
+  title: string;
+  location: string;
+  price: number;
+  beds: number;
+  rating: number;
+  reviews: number;
+  wifi: boolean;
+  tag: string;
+  tagColor: string;
+  image: string;
+}
+
+const rooms: Room[] = [
   { id: 1, title: "Cozy Studio in Thamel", location: "Thamel, Kathmandu", price: 8500, beds: 1, rating: 4.8, reviews: 24, wifi: true, tag: "Popular", tagColor: "#2563EB", image: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=400&auto=format&fit=crop&q=70" },
   { id: 2, title: "Modern 2BHK Flat", location: "Lazimpat, Kathmandu", price: 22000, beds: 2, rating: 4.6, reviews: 18, wifi: true, tag: "New", tagColor: "#059669", image: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=400&auto=format&fit=crop&q=70" },
   { id: 3, title: "Bright Room near Boudha", location: "Boudha, Kathmandu", price: 6000, beds: 1, rating: 4.4, reviews: 11, wifi: true, tag: "Budget", tagColor: "#D97706", image: "https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=400&auto=format&fit=crop&q=70" },
@@ -55,12 +54,26 @@ const rooms = [
   { id: 6, title: "Spacious Flat Patan", location: "Patan, Lalitpur", price: 18000, beds: 2, rating: 4.7, reviews: 21, wifi: true, tag: "Popular", tagColor: "#2563EB", image: "https://images.unsplash.com/photo-1484154218962-a197022b5858?w=400&auto=format&fit=crop&q=70" },
 ];
 
-const stats = [
+interface Stat {
+  label: string;
+  value: string;
+  color: string;
+}
+
+const stats: Stat[] = [
   { label: "Rooms Available", value: "128", color: "#2563EB" },
   { label: "Active Booking", value: "1", color: "#059669" },
   { label: "Saved Rooms", value: "6", color: "#7C3AED" },
   { label: "Total Spent", value: "रू 30,500", color: "#D97706" },
 ];
+
+// ─── Props Interface ──────────────────────────────────────────────────────────
+
+interface DashboardProps {
+  user: AuthUser;
+  onGoProfileUpdate: () => void;
+  onGoPasswordUpdate: () => void;
+}
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 
@@ -68,7 +81,7 @@ export default function Dashboard({
   user,
   onGoProfileUpdate,
   onGoPasswordUpdate
-}: any) {
+}: DashboardProps) {
   const [search, setSearch] = useState("");
   const [liked, setLiked] = useState<number[]>([2, 6]);
 
@@ -101,13 +114,13 @@ export default function Dashboard({
 
         <div style={{ marginTop: 10, display: "flex", gap: 10 }}>
           <button onClick={onGoProfileUpdate}
-            style={{ padding: "8px 12px", background: "#2563EB", color: "white", border: "none", borderRadius: 8 }}
+            style={{ padding: "8px 12px", background: "#2563EB", color: "white", border: "none", borderRadius: 8, cursor: "pointer", fontFamily: "inherit", fontSize: 13, fontWeight: 600 }}
           >
             Edit Profile
           </button>
 
           <button onClick={onGoPasswordUpdate}
-            style={{ padding: "8px 12px", background: "#7C3AED", color: "white", border: "none", borderRadius: 8 }}
+            style={{ padding: "8px 12px", background: "#7C3AED", color: "white", border: "none", borderRadius: 8, cursor: "pointer", fontFamily: "inherit", fontSize: 13, fontWeight: 600 }}
           >
             Change Password
           </button>
@@ -150,7 +163,7 @@ export default function Dashboard({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search..."
-            style={{ border: "none", outline: "none", flex: 1 }}
+            style={{ border: "none", outline: "none", flex: 1, padding: "10px 0", fontFamily: "inherit", fontSize: 13 }}
           />
         </div>
       </div>
@@ -165,11 +178,11 @@ export default function Dashboard({
             border: "1px solid #F3F4F6"
           }}>
 
-            <img src={room.image} style={{ width: "100%", height: 170, objectFit: "cover" }} />
+            <img src={room.image} alt={room.title} style={{ width: "100%", height: 170, objectFit: "cover" }} />
 
             <div style={{ padding: 14 }}>
-              <h3 style={{ fontSize: 14 }}>{room.title}</h3>
-              <p style={{ fontSize: 12, color: "#9CA3AF" }}>
+              <h3 style={{ fontSize: 14, margin: "0 0 4px" }}>{room.title}</h3>
+              <p style={{ fontSize: 12, color: "#9CA3AF", margin: 0 }}>
                 <MapPinIcon /> {room.location}
               </p>
 
@@ -187,7 +200,11 @@ export default function Dashboard({
                   background: liked.includes(room.id) ? "#EF4444" : "#2563EB",
                   color: "white",
                   border: "none",
-                  borderRadius: 8
+                  borderRadius: 8,
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                  fontSize: 13,
+                  fontWeight: 600,
                 }}
               >
                 {liked.includes(room.id) ? "Liked" : "Like"}

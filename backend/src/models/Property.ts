@@ -17,6 +17,11 @@ const propertySchema = new mongoose.Schema(
       enum: ["apartment", "house", "studio", "penthouse"],
       required: [true, "Property type is required"],
     },
+    category: {
+      type: String,
+      enum: ["rent", "sale", "lease"],
+      default: "rent",
+    },
     location: {
       type: String,
       required: [true, "Location is required"],
@@ -58,6 +63,11 @@ const propertySchema = new mongoose.Schema(
     images: {
       type: [String],
       default: [],
+    },
+    availability: {
+      type: String,
+      enum: ["available", "booked", "unavailable"],
+      default: "available",
     },
     landlord: {
       type: mongoose.Schema.Types.ObjectId,

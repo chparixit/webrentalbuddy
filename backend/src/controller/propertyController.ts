@@ -22,6 +22,8 @@ export const getAllProperties = async (req: Request, res: Response) => {
     const bedrooms = req.query.bedrooms ? parseInt(req.query.bedrooms as string) : undefined;
     const bathrooms = req.query.bathrooms ? parseInt(req.query.bathrooms as string) : undefined;
     const status = (req.query.status as string) || "";
+    const category = (req.query.category as string) || "";
+    const availability = (req.query.availability as string) || "";
     const sort = (req.query.sort as string) || "";
 
     const result = await propertyService.getProperties({
@@ -30,6 +32,8 @@ export const getAllProperties = async (req: Request, res: Response) => {
       search,
       city,
       propertyType,
+      category,
+      availability,
       minPrice,
       maxPrice,
       bedrooms,
@@ -106,6 +110,7 @@ export const createProperty = async (req: Request, res: Response) => {
       title,
       description,
       propertyType,
+      category,
       location,
       city,
       district,
@@ -116,6 +121,7 @@ export const createProperty = async (req: Request, res: Response) => {
       amenities,
       featured,
       status,
+      availability,
     } = body;
 
     // Validate required fields
@@ -158,6 +164,7 @@ export const createProperty = async (req: Request, res: Response) => {
         title,
         description,
         propertyType,
+        category: category || "rent",
         location,
         city,
         district: district || "",
@@ -169,6 +176,7 @@ export const createProperty = async (req: Request, res: Response) => {
         images: imagePaths,
         featured: featured === true || featured === "true",
         status: status || "available",
+        availability: availability || "available",
       },
       landlordId
     );
@@ -210,7 +218,7 @@ export const updateProperty = async (req: Request, res: Response) => {
     // Build update data
     const updateData: Record<string, any> = {};
 
-    const stringFields = ["title", "description", "propertyType", "location", "city", "district", "status"];
+    const stringFields = ["title", "description", "propertyType", "category", "location", "city", "district", "status", "availability"];
     for (const field of stringFields) {
       if (body[field] !== undefined) updateData[field] = body[field];
     }

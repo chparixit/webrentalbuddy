@@ -52,7 +52,8 @@ export const getBookingById = async (id: string, userId: string, isAdmin: boolea
   const bookingUserId = typeof booking.user === 'object' && booking.user._id
     ? booking.user._id.toString()
     : booking.user.toString();
-  if (!isAdmin && bookingUserId !== userId) {
+  const userIdStr = String(userId);
+  if (!isAdmin && bookingUserId !== userIdStr) {
     throw new Error("Not authorized to view this booking");
   }
 
@@ -143,7 +144,8 @@ export const updateBooking = async (id: string, data: { status?: string; guests?
   const bookingUserId = typeof booking.user === 'object' && booking.user._id
     ? booking.user._id.toString()
     : booking.user.toString();
-  if (!isAdmin && bookingUserId !== userId) {
+  const userIdStr = String(userId);
+  if (!isAdmin && bookingUserId !== userIdStr) {
     throw new Error("Not authorized to update this booking");
   }
 

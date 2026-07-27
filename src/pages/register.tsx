@@ -1,6 +1,5 @@
 import { useState } from "react";
- import axios from "axios";
- import React from "react";
+import { registerApi, type AuthUser } from "../api/authApi";
 
 // ─── Icons ─────────────────────────────────────────────────────────────
 
@@ -41,12 +40,6 @@ const UserIcon = () => (
   </svg>
 );
 
-const PhoneIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.44 2 2 0 0 1 3.59 1.25h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.96a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" />
-  </svg>
-);
-
 const GoogleIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24">
     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -73,43 +66,41 @@ interface RegisterPageProps {
 export const RegisterPage = ({ onGoLogin }: RegisterPageProps) => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  // ─── Create Account ────────────────────────────────────────────────
+  const handleCreateAccount = async () => {
+    if (!name || !email || !password) {
+      setError("All fields are required");
+      return;
+    }
 
- 
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters");
+      return;
+    }
 
-const handleCreateAccount = async () => {
-  try {
-    const user = {
-      name,
-      email,
-      password,
-    };
+    setLoading(true);
+    setError("");
 
-    const res = await axios.post(
-      "http://localhost:5000/api/auth/register",
-      user
-    );
+    try {
+      // Use centralized API client - automatically handles token injection
+      await registerApi({ name, email, password });
 
-    alert(res.data.message);
-
-    onGoLogin();
-  } catch (error: any) {
-  console.log("FULL ERROR:", error);
-
-  if (error.response) {
-    console.log("STATUS:", error.response.status);
-    console.log("DATA:", error.response.data);
-    alert(JSON.stringify(error.response.data));
-  } else {
-    console.log("MESSAGE:", error.message);
-    alert(error.message);
-  }
-}
-};
+      // Registration successful, redirect to login
+      onGoLogin();
+    } catch (err: any) {
+      const message =
+        err.response?.data?.message ||
+        err.message ||
+        "Registration failed. Please try again.";
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // ─── UI ────────────────────────────────────────────────────────────
 
@@ -124,7 +115,6 @@ const handleCreateAccount = async () => {
       }}
     >
       {/* LEFT IMAGE SECTION */}
-
       <div
         style={{
           width: "50%",
@@ -137,8 +127,6 @@ const handleCreateAccount = async () => {
           alignItems: "flex-end",
         }}
       >
-        {/* Overlay */}
-
         <div
           style={{
             position: "absolute",
@@ -147,9 +135,6 @@ const handleCreateAccount = async () => {
               "linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.7) 100%)",
           }}
         />
-
-        {/* Text */}
-
         <div
           style={{
             position: "relative",
@@ -169,7 +154,6 @@ const handleCreateAccount = async () => {
           >
             Find Your Perfect Sanctuary
           </h2>
-
           <p
             style={{
               fontSize: "16px",
@@ -185,7 +169,6 @@ const handleCreateAccount = async () => {
       </div>
 
       {/* RIGHT REGISTER SECTION */}
-
       <div
         style={{
           width: "50%",
@@ -196,14 +179,7 @@ const handleCreateAccount = async () => {
           padding: "40px",
         }}
       >
-        <div
-          style={{
-            width: "100%",
-            maxWidth: 520,
-          }}
-        >
-          {/* Title */}
-
+        <div style={{ width: "100%", maxWidth: 520 }}>
           <h1
             style={{
               fontSize: 32,
@@ -215,7 +191,6 @@ const handleCreateAccount = async () => {
           >
             Create Account
           </h1>
-
           <p
             style={{
               fontSize: 14,
@@ -227,17 +202,8 @@ const handleCreateAccount = async () => {
             Join Rental Buddy and find your dream home today.
           </p>
 
-          {/* Form */}
-
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 12,
-            }}
-          >
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {/* Full Name */}
-
             <div>
               <label
                 style={{
@@ -252,7 +218,6 @@ const handleCreateAccount = async () => {
               >
                 Full Name
               </label>
-
               <div
                 style={{
                   display: "flex",
@@ -264,10 +229,7 @@ const handleCreateAccount = async () => {
                   gap: 10,
                 }}
               >
-                <span style={{ color: "#9CA3AF" }}>
-                  <UserIcon />
-                </span>
-
+                <span style={{ color: "#9CA3AF" }}><UserIcon /></span>
                 <input
                   type="text"
                   placeholder="Full Name"
@@ -281,13 +243,13 @@ const handleCreateAccount = async () => {
                     padding: "13px 0",
                     fontSize: 14,
                     color: "#111827",
+                    fontFamily: "inherit",
                   }}
                 />
               </div>
             </div>
 
             {/* Email */}
-
             <div>
               <label
                 style={{
@@ -302,7 +264,6 @@ const handleCreateAccount = async () => {
               >
                 Email Address
               </label>
-
               <div
                 style={{
                   display: "flex",
@@ -314,10 +275,7 @@ const handleCreateAccount = async () => {
                   gap: 10,
                 }}
               >
-                <span style={{ color: "#9CA3AF" }}>
-                  <MailIcon />
-                </span>
-
+                <span style={{ color: "#9CA3AF" }}><MailIcon /></span>
                 <input
                   type="email"
                   placeholder="name@email.com"
@@ -331,63 +289,13 @@ const handleCreateAccount = async () => {
                     padding: "13px 0",
                     fontSize: 14,
                     color: "#111827",
-                  }}
-                />
-              </div>
-            </div>
-
-            {/* Phone */}
-
-            <div>
-              <label
-                style={{
-                  display: "block",
-                  fontSize: 11,
-                  fontWeight: 600,
-                  letterSpacing: "0.08em",
-                  color: "#6B7280",
-                  textTransform: "uppercase",
-                  marginBottom: 6,
-                }}
-              >
-                Phone
-              </label>
-
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  border: "1.5px solid #E5E7EB",
-                  borderRadius: 10,
-                  background: "#FAFAFA",
-                  padding: "0 14px",
-                  gap: 10,
-                }}
-              >
-                <span style={{ color: "#9CA3AF" }}>
-                  <PhoneIcon />
-                </span>
-
-                <input
-                  type="tel"
-                  placeholder="+977"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  style={{
-                    flex: 1,
-                    border: "none",
-                    background: "transparent",
-                    outline: "none",
-                    padding: "13px 0",
-                    fontSize: 14,
-                    color: "#111827",
+                    fontFamily: "inherit",
                   }}
                 />
               </div>
             </div>
 
             {/* Password */}
-
             <div>
               <label
                 style={{
@@ -402,7 +310,6 @@ const handleCreateAccount = async () => {
               >
                 Password
               </label>
-
               <div
                 style={{
                   display: "flex",
@@ -414,13 +321,10 @@ const handleCreateAccount = async () => {
                   gap: 10,
                 }}
               >
-                <span style={{ color: "#9CA3AF" }}>
-                  <LockIcon />
-                </span>
-
+                <span style={{ color: "#9CA3AF" }}><LockIcon /></span>
                 <input
                   type={showPass ? "text" : "password"}
-                  placeholder="Min. 8 characters"
+                  placeholder="Min. 6 characters"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   style={{
@@ -431,14 +335,11 @@ const handleCreateAccount = async () => {
                     padding: "13px 0",
                     fontSize: 14,
                     color: "#111827",
+                    fontFamily: "inherit",
                   }}
                 />
-
                 <span
-                  style={{
-                    color: "#9CA3AF",
-                    cursor: "pointer",
-                  }}
+                  style={{ color: "#9CA3AF", cursor: "pointer" }}
                   onClick={() => setShowPass((p) => !p)}
                 >
                   <EyeIcon off={!showPass} />
@@ -446,35 +347,36 @@ const handleCreateAccount = async () => {
               </div>
             </div>
 
-            {/* Create Button */}
+            {/* Error message */}
+            {error && (
+              <p style={{ color: "#DC2626", fontSize: 13, textAlign: "center", margin: 0 }}>
+                {error}
+              </p>
+            )}
 
+            {/* Create Button */}
             <button
+              disabled={loading}
               onClick={handleCreateAccount}
               style={{
                 width: "100%",
                 marginTop: 6,
-                background: "#2563EB",
+                background: loading ? "#9CA3AF" : "#2563EB",
                 color: "white",
                 border: "none",
                 borderRadius: 12,
                 padding: "15px",
                 fontSize: 15,
                 fontWeight: 600,
-                cursor: "pointer",
+                cursor: loading ? "not-allowed" : "pointer",
+                fontFamily: "inherit",
               }}
             >
-              Create Account
+              {loading ? "Creating account..." : "Create Account"}
             </button>
 
             {/* Divider */}
-
-            <div
-              style={{
-                position: "relative",
-                margin: "8px 0",
-                textAlign: "center",
-              }}
-            >
+            <div style={{ position: "relative", margin: "8px 0", textAlign: "center" }}>
               <div
                 style={{
                   position: "absolute",
@@ -485,7 +387,6 @@ const handleCreateAccount = async () => {
                   background: "#F3F4F6",
                 }}
               />
-
               <span
                 style={{
                   position: "relative",
@@ -501,7 +402,6 @@ const handleCreateAccount = async () => {
             </div>
 
             {/* Social */}
-
             <div style={{ display: "flex", gap: 12 }}>
               {[{ icon: <GoogleIcon />, label: "Google" }, { icon: <FacebookIcon />, label: "Facebook" }].map(
                 ({ icon, label }) => (
@@ -521,6 +421,7 @@ const handleCreateAccount = async () => {
                       fontSize: 14,
                       fontWeight: 500,
                       color: "#374151",
+                      fontFamily: "inherit",
                     }}
                   >
                     {icon}
@@ -531,14 +432,8 @@ const handleCreateAccount = async () => {
             </div>
 
             {/* Login */}
-
             <div style={{ textAlign: "center", marginTop: 8 }}>
-              <p
-                style={{
-                  fontSize: 14,
-                  color: "#6B7280",
-                }}
-              >
+              <p style={{ fontSize: 14, color: "#6B7280" }}>
                 Already have an account?{" "}
                 <button
                   onClick={onGoLogin}
@@ -550,6 +445,7 @@ const handleCreateAccount = async () => {
                     cursor: "pointer",
                     fontSize: 14,
                     padding: 0,
+                    fontFamily: "inherit",
                   }}
                 >
                   Log in

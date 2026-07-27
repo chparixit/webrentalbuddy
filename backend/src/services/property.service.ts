@@ -8,6 +8,8 @@ interface GetPropertiesOptions {
   search?: string;
   city?: string;
   propertyType?: string;
+  category?: string;
+  availability?: string;
   minPrice?: number;
   maxPrice?: number;
   bedrooms?: number;
@@ -27,7 +29,7 @@ interface PaginationMeta {
  * Get properties with pagination, search, filtering, and sorting
  */
 export const getProperties = async (options: GetPropertiesOptions) => {
-  const { page, limit, search, city, propertyType, minPrice, maxPrice, bedrooms, bathrooms, status, sort } = options;
+  const { page, limit, search, city, propertyType, category, availability, minPrice, maxPrice, bedrooms, bathrooms, status, sort } = options;
   const skip = (page - 1) * limit;
 
   // Build filter
@@ -66,6 +68,14 @@ export const getProperties = async (options: GetPropertiesOptions) => {
 
   if (status) {
     filter.status = status;
+  }
+
+  if (category) {
+    filter.category = category;
+  }
+
+  if (availability) {
+    filter.availability = availability;
   }
 
   // Build sort

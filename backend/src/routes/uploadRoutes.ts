@@ -22,11 +22,12 @@ router.post(
       const userId = (req as any).user.id;
       await User.findByIdAndUpdate(userId, { profileImage: imageUrl });
 
+      const baseUrl = `${req.protocol}://${req.get("host")}`;
       res.json({
         message: "Profile image uploaded successfully",
         filename: req.file.filename,
         path: imageUrl,
-        imageUrl: `http://192.168.1.66:5000${imageUrl}`,
+        imageUrl: `${baseUrl}${imageUrl}`,
       });
     } catch (error) {
       console.error("Upload error:", error);

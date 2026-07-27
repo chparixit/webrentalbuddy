@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { loginApi } from "../api/authApi";
+import { loginApi, type AuthResponse, type AuthUser } from "../api/authApi";
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
 
@@ -114,13 +114,15 @@ const ImagePanel = () => (
 
 interface LoginPageProps {
   onGoRegister: () => void;
-  onLoginSuccess: (user: any) => void;
+  onLoginSuccess: (user: AuthUser) => void;
 }
 
 export const LoginPage = ({ onGoRegister, onLoginSuccess }: LoginPageProps) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "40px 80px", background: "#F9FAFB", minHeight: "calc(100vh - 60px - 200px)" }}>
@@ -177,50 +179,79 @@ export const LoginPage = ({ onGoRegister, onLoginSuccess }: LoginPageProps) => {
             </div>
           </div>
 
-          {/* Sign In button */}
+          {/* Error message */}
+          {error && (
+            <p
+              style={{
+                color: "#DC2626",
+                fontSize: 13,
+                marginBottom: 16,
+                textAlign: "center",
+              }}
+            >
+              {error}
+            </p>
+          )}
+
           {/* Login button */}
-<button
-  type="button"
-  style={{
-    width: "100%",
-    background: "#2563EB",
-    color: "white",
-    border: "none",
-    borderRadius: 12,
-    padding: "15px",
-    fontSize: 15,
-    fontWeight: 600,
-    cursor: "pointer",
-    fontFamily: "inherit",
-  }}
-  onClick={async (e) => {
-    e.preventDefault();
+          <button
+            disabled={loading}
+            style={{
+              width: "100%",
+              background: loading ? "#9CA3AF" : "#2563EB",
+              color: "white",
+              border: "none",
+              borderRadius: 12,
+              padding: "15px",
+              fontSize: 15,
+              fontWeight: 600,
+              cursor: loading ? "not-allowed" : "pointer",
+              fontFamily: "inherit",
+            }}
+            onClick={async () => {
+              if (!email || !password) {
+                setError("Please enter your email and password.");
+                return;
+              }
 
-    if (!email || !password) {
-      alert("Please enter your email and password.");
-      return;
-    }
+              setLoading(true);
+              setError("");
 
-    try {
-      const res = await loginApi({ email, password });
+              try {
+                // Call login API which uses centralized axios instance
+                const data = await loginApi({ email, password });
 
-      localStorage.setItem("token", res.data.token);
-      onLoginSuccess(res.data.user);
-    } catch (error: any) {
-      if (error.response) {
-        alert(error.response.data?.message ?? "Login failed");
-      } else if (error.code === "ECONNABORTED") {
-        alert("Server is not responding. Make sure the backend is running on port 5000, then try again.");
-      } else {
-        alert(error.message ?? "Login failed");
-      }
-    }
-  }}
-  onMouseOver={(e) => (e.currentTarget.style.background = "#1D4ED8")}
-  onMouseOut={(e) => (e.currentTarget.style.background = "#2563EB")}
->
-  Login →
-</button>
+                // data = { message, token, user }
+                // Store token for axios interceptor to pick up
+                const userWithToken = {
+                  ...data.user,
+                  token: data.token,
+                };
+
+                // Persist to localStorage for persistence across page reloads
+                localStorage.setItem("rentalBuddyUser", JSON.stringify(userWithToken));
+
+                // Notify parent with the complete user object (includes token)
+                onLoginSuccess(userWithToken);
+              } catch (err: any) {
+                const message =
+                  err.response?.data?.message ||
+                  err.message ||
+                  "Login failed. Please try again.";
+                setError(message);
+              } finally {
+                setLoading(false);
+              }
+            }}
+            onMouseOver={(e) => {
+              if (!loading) e.currentTarget.style.background = "#1D4ED8";
+            }}
+            onMouseOut={(e) => {
+              if (!loading) e.currentTarget.style.background = "#2563EB";
+            }}
+          >
+            {loading ? "Signing in..." : "Login →"}
+          </button>
 
           {/* Divider */}
           <div style={{ position: "relative", margin: "24px 0", textAlign: "center" }}>

@@ -15,6 +15,7 @@ import { errorHandler } from "./middlewares/errorHandler";
 import authRoutes from "./routes/authRoutes";
 import uploadRoutes from "./routes/uploadRoutes";
 import adminUserRoutes from "./routes/adminUserRoutes";
+import adminStatsRoutes from "./routes/adminStatsRoutes";
 import propertyRoutes from "./routes/propertyRoutes";
 import wishlistRoutes from "./routes/wishlistRoutes";
 import bookingRoutes from "./routes/bookingRoutes";
@@ -69,6 +70,7 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
 // Version 1 routes (existing)
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1", uploadRoutes);
+app.use("/api/v1/admin", adminStatsRoutes);
 app.use("/api/v1/admin/users", adminUserRoutes);
 app.use("/api/v1/properties", propertyRoutes);
 app.use("/api/v1/wishlist", wishlistRoutes);
@@ -77,6 +79,7 @@ app.use("/api/v1/bookings", bookingRoutes);
 // Direct coursework routes (non-versioned)
 app.use("/api/auth", authRoutes);
 app.use("/api", uploadRoutes);
+app.use("/api/admin", adminStatsRoutes);
 app.use("/api/admin/users", adminUserRoutes);
 app.use("/api/properties", propertyRoutes);
 app.use("/api/wishlist", wishlistRoutes);

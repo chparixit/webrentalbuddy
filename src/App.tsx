@@ -3,19 +3,11 @@ import type { ChangeEvent, FormEvent } from "react";
 import { LoginPage } from "./pages/login";
 import { RegisterPage } from "./pages/register";
 import Dashboard from "./pages/dashboard";
+import { getProfileApi, type AuthUser } from "./api/authApi";
 
 type Page = "login" | "register" | "dashboard" | "profile-update" | "password-update" | "admin";
 
-type User = {
-  id?: string;
-  name?: string;
-  email?: string;
-  role?: string;
-  token?: string;
-  profileImage?: string;
-  preferredBHK?: string;
-  preferredLocation?: string;
-};
+type User = AuthUser;
 
 const LogoIcon = () => (
   <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
@@ -480,54 +472,75 @@ export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const loadUser = async () => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      setUser(null);
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const response = await fetch("http://localhost:5000/api/auth/whoami", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        localStorage.removeItem("token");
-        setUser(null);
-        setLoading(false);
-        return;
-      }
-
-      const data = await response.json();
-      setUser(data.user ?? null);
-
-      if (data.user) {
-        setPage("dashboard");
-      } else {
-        setPage("login");
-      }
-    } catch {
-      localStorage.removeItem("token");
-      setUser(null);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // ─── Load user on app init ──────────────────────────────────────────────
+  // Checks localStorage for persisted user and validates token with backend
   useEffect(() => {
-    loadUser();
+    const initAuth = async () => {
+      try {
+        // First check if we have a stored user object (new pattern)
+        const storedUser = localStorage.getItem("rentalBuddyUser");
+        if (storedUser) {
+          const parsed = JSON.parse(storedUser) as User;
+          if (parsed.token) {
+            // Validate token by fetching profile
+            try {
+              const profileData = await getProfileApi();
+              if (profileData.user) {
+                // Merge fresh profile data with stored token
+                setUser({ ...profileData.user, token: parsed.token });
+                setPage("dashboard");
+                setLoading(false);
+                return;
+              }
+            } catch {
+              // Token invalid - remove and redirect to login
+              localStorage.removeItem("rentalBuddyUser");
+              localStorage.removeItem("token");
+            }
+          }
+        }
+
+        // Fallback: check old `token` key (legacy support)
+        const token = localStorage.getItem("token");
+        if (token) {
+          try {
+            const profileData = await getProfileApi();
+            if (profileData.user) {
+              const userData = { ...profileData.user, token };
+              setUser(userData);
+              // Persist in new format
+              localStorage.setItem("rentalBuddyUser", JSON.stringify(userData));
+              localStorage.removeItem("token"); // Migrate to new format
+              setPage("dashboard");
+              setLoading(false);
+              return;
+            }
+          } catch {
+            localStorage.removeItem("token");
+          }
+        }
+
+        setUser(null);
+        setPage("login");
+      } catch {
+        setUser(null);
+        setPage("login");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initAuth();
   }, []);
 
-  const handleLoginSuccess = async () => {
-    await loadUser();
+  const handleLoginSuccess = (userData: User) => {
+    // userData already contains { id, name, email, token, profileImage, role, ... }
+    setUser(userData);
     setPage("dashboard");
   };
 
   const handleLogout = () => {
+    localStorage.removeItem("rentalBuddyUser");
     localStorage.removeItem("token");
     setUser(null);
     setPage("login");
@@ -567,17 +580,16 @@ export default function App() {
         onLogout={handleLogout}
       />
 
-     {page === "login" && (
-  <LoginPage
-    onGoRegister={() => setPage("register")}
-    onLoginSuccess={(userData: any) => {
-      console.log("LOGIN RESPONSE:", userData);
-
-      setUser(userData.user); // 👈 FIXED (important)
-      setPage("dashboard");
-    }}
-  />
-)}
+      {page === "login" && (
+        <LoginPage
+          onGoRegister={() => setPage("register")}
+          onLoginSuccess={(userData: User) => {
+            // userData is the complete user object with token
+            setUser(userData);
+            setPage("dashboard");
+          }}
+        />
+      )}
 
       {page === "register" && !user && <RegisterPage onGoLogin={() => setPage("login")} />}
 

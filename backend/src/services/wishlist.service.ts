@@ -39,9 +39,16 @@ export const addToWishlist = async (userId: string, propertyId: string) => {
 
 /**
  * Remove a property from the user's wishlist
+ * paramId can be either a wishlist item _id or a property _id
  */
-export const removeFromWishlist = async (userId: string, propertyId: string) => {
-  const item = await Wishlist.findOneAndDelete({ user: userId, property: propertyId });
+export const removeFromWishlist = async (userId: string, paramId: string) => {
+  // Try to find by wishlist _id first (primary method)
+  let item = await Wishlist.findOneAndDelete({ _id: paramId, user: userId });
+
+  // If not found, try by property id (fallback)
+  if (!item) {
+    item = await Wishlist.findOneAndDelete({ user: userId, property: paramId });
+  }
 
   if (!item) {
     throw new Error("Wishlist item not found");

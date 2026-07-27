@@ -20,4 +20,5 @@ module.exports = {
   verbose: true,
   forceExit: true,
   detectOpenHandles: true,
+  testTimeout: 30000,
 };

@@ -55,8 +55,34 @@ export const addToWishlist = async (req: Request, res: Response) => {
 /**
  * DELETE /api/v1/wishlist/:propertyId
  * Remove a property from the user's wishlist
+ * The param can be either a wishlist item _id or a property _id
  */
 export const removeFromWishlist = async (req: Request, res: Response) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+    const userId = authReq.user._id;
+    const paramId = String(req.params.propertyId);
+
+    if (!mongoose.Types.ObjectId.isValid(paramId)) {
+      return res.status(400).json({ message: "Invalid ID parameter" });
+    }
+
+    const result = await wishlistService.removeFromWishlist(userId, paramId);
+    return res.status(200).json(result);
+  } catch (error: any) {
+    if (error.message === "Wishlist item not found") {
+      return res.status(404).json({ message: error.message });
+    }
+    console.error("Error removing from wishlist:", error);
+    return res.status(500).json({ message: "Server Error" });
+  }
+};
+
+/**
+ * GET /api/v1/wishlist/check/:propertyId
+ * Check if a property is in the user's wishlist
+ */
+export const checkWishlistStatus = async (req: Request, res: Response) => {
   try {
     const authReq = req as AuthenticatedRequest;
     const userId = authReq.user._id;
@@ -66,13 +92,10 @@ export const removeFromWishlist = async (req: Request, res: Response) => {
       return res.status(400).json({ message: "Invalid property ID" });
     }
 
-    const result = await wishlistService.removeFromWishlist(userId, propertyId);
-    return res.status(200).json(result);
-  } catch (error: any) {
-    if (error.message === "Wishlist item not found") {
-      return res.status(404).json({ message: error.message });
-    }
-    console.error("Error removing from wishlist:", error);
+    const isFavourite = await wishlistService.checkWishlistStatus(userId, propertyId);
+    return res.status(200).json({ isFavourite });
+  } catch (error) {
+    console.error("Error checking wishlist status:", error);
     return res.status(500).json({ message: "Server Error" });
   }
 };
