@@ -32,9 +32,11 @@ app.use(cors({
 
 // ─── Rate Limiting ─────────────────────────────────────────────────────────
 
+// General API rate limiter - accounts for dashboard's multiple parallel fetches
+// and React's development-mode double-rendering
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
+  max: 300, // increased from 100 to accommodate admin dashboard parallel fetches
   message: {
     success: false,
     message: "Too many requests, please try again later.",
@@ -44,6 +46,21 @@ const apiLimiter = rateLimit({
 });
 
 app.use("/api/", apiLimiter);
+
+// Stricter rate limiter for auth endpoints
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  message: {
+    success: false,
+    message: "Too many auth attempts, please try again later.",
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+app.use("/api/v1/auth", authLimiter);
+app.use("/api/auth", authLimiter);
 
 // ─── Body Parsing ──────────────────────────────────────────────────────────
 
