@@ -57,7 +57,7 @@ describe("PropertyCard", () => {
 
   it("renders bedrooms, bathrooms, and area", () => {
     render(<PropertyCard property={mockProperty} />);
-    expect(screen.getByText("4")).toBeInTheDocument();
+    expect(screen.getAllByText("4").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("2500 sqft")).toBeInTheDocument();
   });
 

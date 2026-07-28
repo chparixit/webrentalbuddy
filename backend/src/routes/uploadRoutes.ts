@@ -19,7 +19,8 @@ router.post(
       const imageUrl = `/uploads/${req.file.filename}`;
 
       // Save image path to the authenticated user's document
-      const userId = (req as any).user.id;
+      const authUser = (req as any).user;
+      const userId = authUser._id || authUser.id;
       await User.findByIdAndUpdate(userId, { profileImage: imageUrl });
 
       const baseUrl = `${req.protocol}://${req.get("host")}`;
@@ -42,7 +43,8 @@ router.get(
   authMiddleware,
   async (req, res) => {
     try {
-      const userId = (req as any).user.id;
+      const authUser = (req as any).user;
+      const userId = authUser._id || authUser.id;
       const user = await User.findById(userId).select("-password");
       if (!user) {
         return res.status(404).json({ message: "User not found" });

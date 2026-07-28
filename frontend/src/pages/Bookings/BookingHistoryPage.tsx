@@ -364,7 +364,7 @@ export const BookingHistoryPage = ({ onNavigate }: BookingHistoryPageProps) => {
       {!loading && displayBookings.length > 0 && (
         <>
           {/* Desktop Table */}
-          <div style={{ display: "none", "@media (min-width: 768px)": { display: "block" } } as any}>
+          <div className="booking-desktop-table">
             <div
               style={{
                 background: colors.bgPrimary,
@@ -643,6 +643,17 @@ export const BookingHistoryPage = ({ onNavigate }: BookingHistoryPageProps) => {
           </div>
         </>
       )}
+
+      <style>{`
+        .booking-desktop-table {
+          display: none;
+        }
+        @media (min-width: 768px) {
+          .booking-desktop-table {
+            display: block;
+          }
+        }
+      `}</style>
     </div>
   );
 };
