@@ -3,9 +3,10 @@ import type { ChangeEvent, FormEvent } from "react";
 import { LoginPage } from "./pages/login";
 import { RegisterPage } from "./pages/register";
 import Dashboard from "./pages/dashboard";
-import { getProfileApi, type AuthUser } from "./api/authApi";
+import { AdminDashboard } from "./pages/Admin/AdminDashboard";
+import { getProfileApi, updateProfileApi, updatePasswordApi, type AuthUser } from "./api/authApi";
 
-type Page = "login" | "register" | "dashboard" | "profile-update" | "password-update" | "admin";
+type Page = "login" | "register" | "dashboard" | "profile-update" | "password-update" | "admin" | "admin-users" | "admin-properties" | "admin-bookings" | "admin-add-property";
 
 type User = AuthUser;
 
@@ -163,9 +164,45 @@ const ProfileUpdatePage = ({ user, onBack }: { user: User; onBack: () => void })
   const [name, setName] = useState(user.name || "");
   const [preferredBHK, setPreferredBHK] = useState(user.preferredBHK || "");
   const [preferredLocation, setPreferredLocation] = useState(user.preferredLocation || "");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setLoading(true);
+    setError("");
+    setSuccess("");
+
+    try {
+      const formData = new FormData();
+      formData.append("name", name);
+      formData.append("preferredBHK", preferredBHK);
+      formData.append("preferredLocation", preferredLocation);
+
+      const result = await updateProfileApi(formData);
+      setSuccess(result.message || "Profile updated successfully!");
+
+      // Update localStorage with new user data
+      const storedUser = localStorage.getItem("rentalBuddyUser");
+      if (storedUser) {
+        const parsed = JSON.parse(storedUser);
+        parsed.name = result.user.name;
+        parsed.preferredBHK = result.user.preferredBHK;
+        parsed.preferredLocation = result.user.preferredLocation;
+        parsed.profileImage = result.user.profileImage;
+        localStorage.setItem("rentalBuddyUser", JSON.stringify(parsed));
+      }
+    } catch (err: unknown) {
+      const errorMessage =
+        err instanceof Error ? err.message :
+        typeof err === "object" && err !== null && "response" in err ?
+          (err as any).response?.data?.message || "Failed to update profile" :
+          "Failed to update profile";
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -195,6 +232,35 @@ const ProfileUpdatePage = ({ user, onBack }: { user: User; onBack: () => void })
         }}
       >
         <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 16 }}>Update Profile</h1>
+
+        {success && (
+          <div style={{
+            padding: "12px 16px",
+            background: "#ECFDF5",
+            color: "#065F46",
+            borderRadius: 10,
+            fontSize: 14,
+            marginBottom: 20,
+            border: "1px solid #A7F3D0",
+          }}>
+            {success}
+          </div>
+        )}
+
+        {error && (
+          <div style={{
+            padding: "12px 16px",
+            background: "#FEF2F2",
+            color: "#DC2626",
+            borderRadius: 10,
+            fontSize: 14,
+            marginBottom: 20,
+            border: "1px solid #FECACA",
+          }}>
+            {error}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit}>
           <div style={{ marginBottom: 20 }}>
             <label style={{ display: "block", marginBottom: 8, fontSize: 13, color: "#6B7280" }}>
@@ -211,6 +277,7 @@ const ProfileUpdatePage = ({ user, onBack }: { user: User; onBack: () => void })
                 outline: "none",
                 fontSize: 14,
                 fontFamily: "inherit",
+                boxSizing: "border-box",
               }}
             />
           </div>
@@ -229,6 +296,7 @@ const ProfileUpdatePage = ({ user, onBack }: { user: User; onBack: () => void })
                 outline: "none",
                 fontSize: 14,
                 fontFamily: "inherit",
+                boxSizing: "border-box",
               }}
             />
           </div>
@@ -247,25 +315,27 @@ const ProfileUpdatePage = ({ user, onBack }: { user: User; onBack: () => void })
                 outline: "none",
                 fontSize: 14,
                 fontFamily: "inherit",
+                boxSizing: "border-box",
               }}
             />
           </div>
           <button
             type="submit"
+            disabled={loading}
             style={{
               width: "100%",
               padding: "14px",
-              background: "#2563EB",
+              background: loading ? "#9CA3AF" : "#2563EB",
               color: "white",
               border: "none",
               borderRadius: 12,
               fontSize: 15,
               fontWeight: 600,
-              cursor: "pointer",
+              cursor: loading ? "not-allowed" : "pointer",
               fontFamily: "inherit",
             }}
           >
-            Save Changes
+            {loading ? "Saving..." : "Save Changes"}
           </button>
         </form>
       </div>
@@ -277,9 +347,56 @@ const PasswordUpdatePage = ({ onBack }: { onBack: () => void }) => {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setError("");
+    setSuccess("");
+
+    if (!currentPassword) {
+      setError("Current password is required");
+      return;
+    }
+
+    if (!newPassword) {
+      setError("New password is required");
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      setError("New password must be at least 6 characters");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const result = await updatePasswordApi({
+        currentPassword,
+        newPassword,
+      });
+      setSuccess(result.message || "Password updated successfully!");
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (err: unknown) {
+      const errorMessage =
+        err instanceof Error ? err.message :
+        typeof err === "object" && err !== null && "response" in err ?
+          (err as any).response?.data?.message || "Failed to update password" :
+          "Failed to update password";
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -309,6 +426,35 @@ const PasswordUpdatePage = ({ onBack }: { onBack: () => void }) => {
         }}
       >
         <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 16 }}>Change Password</h1>
+
+        {success && (
+          <div style={{
+            padding: "12px 16px",
+            background: "#ECFDF5",
+            color: "#065F46",
+            borderRadius: 10,
+            fontSize: 14,
+            marginBottom: 20,
+            border: "1px solid #A7F3D0",
+          }}>
+            {success}
+          </div>
+        )}
+
+        {error && (
+          <div style={{
+            padding: "12px 16px",
+            background: "#FEF2F2",
+            color: "#DC2626",
+            borderRadius: 10,
+            fontSize: 14,
+            marginBottom: 20,
+            border: "1px solid #FECACA",
+          }}>
+            {error}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit}>
           <div style={{ marginBottom: 20 }}>
             <label style={{ display: "block", marginBottom: 8, fontSize: 13, color: "#6B7280" }}>
@@ -326,6 +472,7 @@ const PasswordUpdatePage = ({ onBack }: { onBack: () => void }) => {
                 outline: "none",
                 fontSize: 14,
                 fontFamily: "inherit",
+                boxSizing: "border-box",
               }}
             />
           </div>
@@ -345,6 +492,7 @@ const PasswordUpdatePage = ({ onBack }: { onBack: () => void }) => {
                 outline: "none",
                 fontSize: 14,
                 fontFamily: "inherit",
+                boxSizing: "border-box",
               }}
             />
           </div>
@@ -364,25 +512,27 @@ const PasswordUpdatePage = ({ onBack }: { onBack: () => void }) => {
                 outline: "none",
                 fontSize: 14,
                 fontFamily: "inherit",
+                boxSizing: "border-box",
               }}
             />
           </div>
           <button
             type="submit"
+            disabled={loading}
             style={{
               width: "100%",
               padding: "14px",
-              background: "#2563EB",
+              background: loading ? "#9CA3AF" : "#2563EB",
               color: "white",
               border: "none",
               borderRadius: 12,
               fontSize: 15,
               fontWeight: 600,
-              cursor: "pointer",
+              cursor: loading ? "not-allowed" : "pointer",
               fontFamily: "inherit",
             }}
           >
-            Update Password
+            {loading ? "Updating..." : "Update Password"}
           </button>
         </form>
       </div>
@@ -404,7 +554,7 @@ const AdminUsers = ({ onBack }: { onBack: () => void }) => (
         fontFamily: "inherit",
       }}
     >
-      ← Back to Dashboard
+      ← Back to Admin Dashboard
     </button>
     <div
       style={{
@@ -423,6 +573,7 @@ const AdminUsers = ({ onBack }: { onBack: () => void }) => (
     </div>
   </div>
 );
+
 
 const Footer = () => (
   <footer style={{ background: "white", borderTop: "1px solid #F3F4F6", padding: "48px 80px 24px" }}>
@@ -533,12 +684,6 @@ export default function App() {
     initAuth();
   }, []);
 
-  const handleLoginSuccess = (userData: User) => {
-    // userData already contains { id, name, email, token, profileImage, role, ... }
-    setUser(userData);
-    setPage("dashboard");
-  };
-
   const handleLogout = () => {
     localStorage.removeItem("rentalBuddyUser");
     localStorage.removeItem("token");
@@ -617,11 +762,60 @@ export default function App() {
         <div style={{ padding: 40, textAlign: "center" }}>Please login to change your password.</div>
       )}
 
-      {page === "admin" && (
+      {(page === "admin" || page === "admin-users" || page === "admin-properties" || page === "admin-bookings" || page === "admin-add-property") && (
         user?.role === "admin" ? (
-          <AdminUsers onBack={() => setPage("dashboard")} />
+          page === "admin" ? (
+            <AdminDashboard
+              onNavigate={(p) => setPage(p as Page)}
+              onBack={() => setPage("dashboard")}
+            />
+          ) : page === "admin-users" ? (
+            <AdminUsers onBack={() => setPage("admin")} />
+          ) : (
+            <div style={{ padding: "40px", minHeight: "calc(100vh - 60px)", background: "#F9FAFB" }}>
+              <button
+                onClick={() => setPage("admin")}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "#2563EB",
+                  cursor: "pointer",
+                  fontSize: 14,
+                  marginBottom: 20,
+                  fontFamily: "inherit",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 4,
+                }}
+              >
+                ← Back to Admin Dashboard
+              </button>
+              <div
+                style={{
+                  background: "white",
+                  borderRadius: 20,
+                  padding: 32,
+                  boxShadow: "0 4px 24px rgba(15, 23, 42, 0.08)",
+                  maxWidth: 760,
+                  margin: "0 auto",
+                }}
+              >
+                <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 16, color: "#111827" }}>
+                  {page === "admin-properties" ? "🏘️ Property Management" : page === "admin-bookings" ? "📋 Booking Management" : page === "admin-add-property" ? "➕ Add Property" : "Admin Panel"}
+                </h1>
+                <p style={{ color: "#6B7280", lineHeight: 1.7 }}>
+                  {page === "admin-properties" ? "Add, edit, and manage all property listings on the platform." :
+                   page === "admin-bookings" ? "View and manage all user bookings and their statuses." :
+                   page === "admin-add-property" ? "Create a new property listing to be displayed on the platform." :
+                   "Admin management panel"}
+                </p>
+              </div>
+            </div>
+          )
         ) : (
-          <div style={{ padding: 40, textAlign: "center" }}>Access denied. Admin only.</div>
+          <div style={{ padding: 40, textAlign: "center", background: "#F9FAFB", minHeight: "calc(100vh - 60px)" }}>
+            Access denied. Admin only.
+          </div>
         )
       )}
 

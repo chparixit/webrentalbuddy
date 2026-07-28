@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { loginApi, type AuthResponse, type AuthUser } from "../api/authApi";
+import { loginApi, type AuthUser } from "../api/authApi";
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
 

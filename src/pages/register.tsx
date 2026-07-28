@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { registerApi, type AuthUser } from "../api/authApi";
+import { registerApi } from "../api/authApi";
 
 // ─── Icons ─────────────────────────────────────────────────────────────
 
